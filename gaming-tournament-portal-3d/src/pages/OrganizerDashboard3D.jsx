@@ -1,241 +1,184 @@
+import { useState, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls, Text } from '@react-three/drei'
-import { useRef, useState } from 'react'
+import { OrbitControls, Environment, Stars, Float, Sparkles } from '@react-three/drei'
 import * as THREE from 'three'
+import { useNotifications } from '../context/NotificationContext'
 
-function DashboardCube({ color = '#39ff14', position, title }) {
+function DataNode({ position, color, label, size = 1 }) {
 	const ref = useRef()
 	const [hovered, setHovered] = useState(false)
 	
 	useFrame((state) => {
 		if (ref.current) {
-			ref.current.rotation.y = state.clock.elapsedTime * 0.3
-			ref.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.5) * 0.1
+			ref.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * 2 + position[0]) * 0.1
+			ref.current.rotation.y = state.clock.elapsedTime * 0.5
 		}
 	})
 	
 	return (
-		<group position={position}>
-			<mesh 
-				ref={ref} 
-				castShadow 
-				receiveShadow
-				onPointerOver={() => setHovered(true)}
-				onPointerOut={() => setHovered(false)}
-			>
-				<boxGeometry args={[1, 1, 1]} />
-				<meshStandardMaterial 
-					color={color} 
-					metalness={0.8} 
-					roughness={0.2} 
-					emissive={color} 
-					emissiveIntensity={hovered ? 0.4 : 0.1}
-				/>
-			</mesh>
-			{hovered && (
-				<Text
-					position={[0, 1.5, 0]}
-					fontSize={0.2}
-					color={color}
-					anchorX="center"
-					anchorY="middle"
+		<Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
+			<group position={position}>
+				<mesh 
+					ref={ref}
+					onPointerOver={() => setHovered(true)}
+					onPointerOut={() => setHovered(false)}
+					aria-label={label}
 				>
-					{title}
-				</Text>
-			)}
-		</group>
+					<octahedronGeometry args={[size * 0.5]} />
+					<meshStandardMaterial 
+						color={color} 
+						metalness={0.9} 
+						roughness={0.1}
+						emissive={color}
+						emissiveIntensity={hovered ? 0.8 : 0.3}
+					/>
+				</mesh>
+				<mesh position={[0, -0.8, 0]}>
+					<cylinderGeometry args={[0.02, 0.02, 1.5]} />
+					<meshBasicMaterial color={color} transparent opacity={0.2} />
+				</mesh>
+			</group>
+		</Float>
+	)
+}
+
+function DashboardVisual() {
+	return (
+		<Canvas 
+			gl={{ antialias: true }} 
+			dpr={[1, 2]} 
+			camera={{ position: [6, 4, 8], fov: 45 }}
+		>
+			<color attach="background" args={['#000000']} />
+			<Stars radius={100} depth={50} count={2000} factor={4} saturation={0} fade speed={1} />
+			
+			<ambientLight intensity={0.4} />
+			<pointLight position={[10, 10, 10]} intensity={1.5} color="#bc13fe" />
+			<pointLight position={[-10, 5, -10]} intensity={1} color="#00e5ff" />
+			
+			<DataNode position={[0, 0, 0]} color="#39ff14" label="Main Core" size={1.5} />
+			<DataNode position={[-3, 1, 2]} color="#bc13fe" label="User Logic" />
+			<DataNode position={[3, -1, -2]} color="#00e5ff" label="Match Engine" />
+			<DataNode position={[2, 2, 3]} color="#ff6b35" label="Auth Socket" />
+			
+			<Sparkles count={100} scale={10} size={2} speed={0.5} color="#39ff14" />
+			
+			<mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]}>
+				<planeGeometry args={[30, 30, 30, 30]} />
+				<meshBasicMaterial color="#39ff14" transparent opacity={0.05} wireframe />
+			</mesh>
+			
+			<OrbitControls enableDamping autoRotate autoRotateSpeed={0.5} />
+			<Environment preset="night" />
+		</Canvas>
 	)
 }
 
 export default function OrganizerDashboard3D() {
-	const [activeTab, setActiveTab] = useState('overview')
-	
-	const tournaments = [
-		{
-			id: 1,
-			name: 'Neon Clash Championship',
-			game: 'Valorant',
-			status: 'Live',
-			participants: 128,
-			prizePool: 25000,
-			startDate: '2024-01-15',
-			endDate: '2024-01-20',
-			matches: 64,
-			completed: 32
-		},
-		{
-			id: 2,
-			name: 'Quantum Royale',
-			game: 'Fortnite',
-			status: 'Upcoming',
-			participants: 256,
-			prizePool: 15000,
-			startDate: '2024-01-25',
-			endDate: '2024-01-30',
-			matches: 128,
-			completed: 0
-		},
-		{
-			id: 3,
-			name: 'Cyber Arena Masters',
-			game: 'League of Legends',
-			status: 'Registration',
-			participants: 64,
-			prizePool: 20000,
-			startDate: '2024-02-01',
-			endDate: '2024-02-05',
-			matches: 32,
-			completed: 0
-		}
+	const { addNotification } = useNotifications()
+	const stats = [
+		{ label: 'Active Servers', value: '12', trend: '+2', color: 'text-neon-green' },
+		{ label: 'Global Load', value: '42%', trend: '-5%', color: 'text-neon-blue' },
+		{ label: 'Neural Uplinks', value: '8.4k', trend: '+1.2k', color: 'text-neon-purple' },
+		{ label: 'System Health', value: '99.9%', trend: 'Stable', color: 'text-cyber-cyan' }
 	]
-	
-	const stats = {
-		totalTournaments: 12,
-		activeTournaments: 3,
-		totalParticipants: 1847,
-		totalPrizePool: 150000,
-		completedMatches: 156,
-		upcomingMatches: 89
+
+	const handleAction = (action) => {
+		addNotification({
+			title: 'Command Executed',
+			message: `System protocol: ${action} initialized successfully.`,
+			type: 'success'
+		})
 	}
-	
+
 	return (
-		<div className="space-y-6">
-			<div className="text-center space-y-2">
-				<h2 className="text-3xl md:text-4xl font-display neon-text">Organizer Dashboard</h2>
-				<p className="text-white/70">Manage tournaments, teams, and matches</p>
-			</div>
-			
-			{/* 3D Dashboard Visualization */}
-			<div className="glass rounded-2xl p-6">
-				<h3 className="text-xl font-semibold mb-4 text-center">3D Management Hub</h3>
-				<div className="h-[40dvh]">
-					<Canvas gl={{ antialias: true, powerPreference: 'high-performance' }} dpr={[1, 2]} camera={{ position: [3, 2, 5], fov: 50 }}>
-						<ambientLight intensity={0.6} />
-						<spotLight position={[5, 8, 5]} angle={0.4} intensity={1.2} castShadow />
-						<pointLight position={[-3, 3, -3]} intensity={0.8} color="#39ff14" />
-						<pointLight position={[3, 3, 3]} intensity={0.6} color="#bc13fe" />
-						
-						<DashboardCube color="#39ff14" position={[-2, 0, 0]} title="Tournaments" />
-						<DashboardCube color="#bc13fe" position={[0, 0, 0]} title="Teams" />
-						<DashboardCube color="#00e5ff" position={[2, 0, 0]} title="Matches" />
-						
-						<OrbitControls enableDamping autoRotate autoRotateSpeed={0.2} />
-					</Canvas>
+		<div className="space-y-10 stagger-in">
+			<div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-2">
+				<div className="space-y-2">
+					<div className="flex items-center gap-3">
+						<div className="w-2 h-2 rounded-full bg-neon-green animate-ping" />
+						<span className="text-neon-green text-[10px] font-display tracking-[0.3em] uppercase">System Live</span>
+					</div>
+					<h2 className="text-4xl lg:text-5xl font-display tracking-tight">Staff <span className="gradient-text">Control Center</span></h2>
 				</div>
-			</div>
-			
-			{/* Stats Overview */}
-			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-				<div className="glass rounded-xl p-4 text-center">
-					<div className="text-2xl font-bold text-green-400">{stats.totalTournaments}</div>
-					<div className="text-white/70 text-sm">Total Tournaments</div>
-				</div>
-				<div className="glass rounded-xl p-4 text-center">
-					<div className="text-2xl font-bold text-blue-400">{stats.activeTournaments}</div>
-					<div className="text-white/70 text-sm">Active</div>
-				</div>
-				<div className="glass rounded-xl p-4 text-center">
-					<div className="text-2xl font-bold text-purple-400">{stats.totalParticipants}</div>
-					<div className="text-white/70 text-sm">Participants</div>
-				</div>
-				<div className="glass rounded-xl p-4 text-center">
-					<div className="text-2xl font-bold text-yellow-400">${stats.totalPrizePool.toLocaleString()}</div>
-					<div className="text-white/70 text-sm">Prize Pool</div>
-				</div>
-				<div className="glass rounded-xl p-4 text-center">
-					<div className="text-2xl font-bold text-red-400">{stats.completedMatches}</div>
-					<div className="text-white/70 text-sm">Completed</div>
-				</div>
-				<div className="glass rounded-xl p-4 text-center">
-					<div className="text-2xl font-bold text-orange-400">{stats.upcomingMatches}</div>
-					<div className="text-white/70 text-sm">Upcoming</div>
-				</div>
-			</div>
-			
-			{/* Tournament Management */}
-			<div className="glass rounded-2xl p-6">
-				<div className="flex items-center justify-between mb-6">
-					<h3 className="text-xl font-semibold text-white">Tournament Management</h3>
-					<button className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors">
-						+ Create Tournament
+				<div className="flex gap-3">
+					<button 
+						onClick={() => handleAction('DIAGNOSTICS')}
+						className="glass-premium px-6 py-2.5 rounded-xl text-xs font-display hover:text-neon-blue transition-all border-white/5"
+					>
+						Full Diagnostics
+					</button>
+					<button 
+						onClick={() => handleAction('SYSTEM PURGE')}
+						className="bg-cyber-pink/20 text-cyber-pink px-6 py-2.5 rounded-xl text-xs font-display hover:bg-cyber-pink/30 transition-all border border-cyber-pink/20"
+					>
+						Emergency Purge
 					</button>
 				</div>
-				
-				<div className="space-y-4">
-					{tournaments.map((tournament) => (
-						<div key={tournament.id} className="glass rounded-xl p-4 hover:scale-105 transition-all duration-300">
-							<div className="flex items-center justify-between">
-								<div className="flex items-center space-x-4">
-									<div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center">
-										<span className="text-2xl">🎮</span>
-									</div>
-									<div>
-										<h4 className="text-lg font-semibold text-white">{tournament.name}</h4>
-										<p className="text-white/70 text-sm">{tournament.game} • {tournament.participants} participants</p>
-									</div>
-								</div>
-								
-								<div className="flex items-center space-x-6">
-									<div className="text-center">
-										<div className="text-sm font-bold text-green-400">${tournament.prizePool.toLocaleString()}</div>
-										<div className="text-xs text-white/50">Prize Pool</div>
-									</div>
-									<div className="text-center">
-										<div className="text-sm font-bold text-blue-400">{tournament.completed}/{tournament.matches}</div>
-										<div className="text-xs text-white/50">Matches</div>
-									</div>
-									<span className={`px-3 py-1 rounded-full text-xs font-medium ${
-										tournament.status === 'Live' ? 'bg-red-500/20 text-red-400' :
-										tournament.status === 'Upcoming' ? 'bg-yellow-500/20 text-yellow-400' :
-										'bg-blue-500/20 text-blue-400'
-									}`}>
-										{tournament.status}
-									</span>
-									<div className="flex space-x-2">
-										<button className="px-3 py-1 bg-white/10 text-white/70 rounded text-sm hover:bg-white/20 transition-colors">
-											Edit
-										</button>
-										<button className="px-3 py-1 bg-white/10 text-white/70 rounded text-sm hover:bg-white/20 transition-colors">
-											View
-										</button>
-									</div>
-								</div>
-							</div>
-							
-							<div className="mt-3 pt-3 border-t border-white/10">
-								<div className="flex items-center justify-between text-sm text-white/60">
-									<span>Start: {tournament.startDate}</span>
-									<span>End: {tournament.endDate}</span>
-									<div className="flex items-center space-x-2">
-										<div className="w-2 h-2 bg-green-400 rounded-full"></div>
-										<span>Progress: {Math.round((tournament.completed / tournament.matches) * 100)}%</span>
-									</div>
-								</div>
-							</div>
-						</div>
-					))}
-				</div>
 			</div>
-			
-			{/* Quick Actions */}
-			<div className="grid md:grid-cols-3 gap-4">
-				<div className="glass rounded-xl p-4 text-center hover:scale-105 transition-all duration-300 cursor-pointer">
-					<div className="text-3xl mb-2">🏆</div>
-					<h4 className="font-semibold text-white mb-2">Create Tournament</h4>
-					<p className="text-white/70 text-sm">Set up a new competitive tournament</p>
+
+			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+				{stats.map((stat, i) => (
+					<div key={i} className="glass-premium p-6 rounded-2xl border-white/5 card-hover relative overflow-hidden group">
+						<div className="absolute top-0 right-0 w-24 h-24 bg-white/5 blur-2xl -z-10 group-hover:bg-white/10 transition-colors" />
+						<div className="text-[10px] font-display text-white/30 tracking-widest uppercase mb-2">{stat.label}</div>
+						<div className={`text-3xl font-black ${stat.color} tracking-tighter`}>{stat.value}</div>
+						<div className="mt-2 text-[10px] font-mono text-white/20">
+							Trend: <span className={stat.trend.startsWith('+') ? 'text-neon-green' : 'text-white/40'}>{stat.trend}</span>
+						</div>
+					</div>
+				))}
+			</div>
+
+			<div className="grid lg:grid-cols-3 gap-6">
+				<div className="lg:col-span-2 glass-vibrant rounded-[2.5rem] p-8 border-white/5 relative overflow-hidden h-[500px]">
+					<div className="absolute top-8 left-8 z-10 space-y-1">
+						<h3 className="text-sm font-display tracking-widest text-white/40">Neural Core Visualization</h3>
+						<p className="text-xs text-white/20 font-mono italic text-nowrap">Real-time node map of tournament infrastructure</p>
+					</div>
+					<div className="absolute inset-0 pointer-events-auto">
+						<DashboardVisual />
+					</div>
 				</div>
-				<div className="glass rounded-xl p-4 text-center hover:scale-105 transition-all duration-300 cursor-pointer">
-					<div className="text-3xl mb-2">👥</div>
-					<h4 className="font-semibold text-white mb-2">Manage Teams</h4>
-					<p className="text-white/70 text-sm">Add, edit, or remove teams</p>
-				</div>
-				<div className="glass rounded-xl p-4 text-center hover:scale-105 transition-all duration-300 cursor-pointer">
-					<div className="text-3xl mb-2">📊</div>
-					<h4 className="font-semibold text-white mb-2">View Analytics</h4>
-					<p className="text-white/70 text-sm">Tournament performance metrics</p>
+
+				<div className="space-y-6">
+					<div className="glass-premium rounded-3xl p-8 border-white/5 h-full">
+						<h3 className="text-sm font-display tracking-widest text-white/40 mb-8 border-b border-white/5 pb-4">Protocol Queue</h3>
+						<div className="space-y-6">
+							{[
+								{ id: 'T-992', status: 'deploying', time: '2m ago' },
+								{ id: 'M-441', status: 'verified', time: '12m ago' },
+								{ id: 'S-772', status: 'stabilized', time: '45m ago' },
+								{ id: 'U-102', status: 'failed', time: '1h ago' },
+								{ id: 'R-229', status: 'queued', time: '2h ago' }
+							].map((item, i) => (
+								<div key={i} className="flex items-center justify-between group cursor-pointer hover:translate-x-1 transition-transform">
+									<div className="flex items-center gap-4">
+										<div className={`w-1.5 h-1.5 rounded-full ${
+											item.status === 'failed' ? 'bg-cyber-pink shadow-[0_0_10px_rgba(255,20,147,0.5)]' : 
+											item.status === 'deploying' ? 'bg-neon-blue animate-pulse' : 'bg-neon-green'
+										}`} />
+										<div className="space-y-0.5">
+											<div className="text-xs font-mono text-white/90">PROCESS_{item.id}</div>
+											<div className="text-[10px] text-white/20 uppercase tracking-tighter">{item.status}</div>
+										</div>
+									</div>
+									<div className="text-right">
+										<div className="text-[9px] text-white/20 font-mono">{item.time}</div>
+									</div>
+								</div>
+							))}
+						</div>
+						
+						<button 
+							onClick={() => handleAction('QUEUE_OPTIMIZATION')}
+							className="w-full mt-10 py-3 rounded-xl border border-white/5 hover:border-white/10 glass bg-white/5 text-[10px] font-display tracking-widest uppercase hover:bg-white/10 transition-all"
+						>
+							Optimize Clusters
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>
 	)
 }
-

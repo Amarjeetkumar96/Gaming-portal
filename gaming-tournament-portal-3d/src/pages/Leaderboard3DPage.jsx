@@ -28,9 +28,8 @@ function LeaderboardPodium({ position, rank, color, teamName }) {
 						emissiveIntensity={0.3}
 					/>
 				</mesh>
-				{/* Glowing effect */}
-				<mesh position={[0, height/2, 0]}>
-					<sphereGeometry args={[0.3, 16, 16]} />
+				<mesh position={[0, height/2 + 0.2, 0]}>
+					<sphereGeometry args={[0.2, 16, 16]} />
 					<meshBasicMaterial 
 						color={color} 
 						transparent 
@@ -39,10 +38,11 @@ function LeaderboardPodium({ position, rank, color, teamName }) {
 				</mesh>
 				<Text
 					position={[0, height + 0.5, 0]}
-					fontSize={0.2}
-					color={color}
+					fontSize={0.25}
+					color="white"
 					anchorX="center"
 					anchorY="middle"
+					font="/fonts/orbitron.woff"
 				>
 					{teamName}
 				</Text>
@@ -67,7 +67,6 @@ function LeaderboardVisualization() {
 			<color attach="background" args={['#000000']} />
 			<Stars radius={100} depth={50} count={3000} factor={4} saturation={0} fade speed={1} />
 			
-			{/* Lighting */}
 			<ambientLight intensity={0.4} color="#ffffff" />
 			<directionalLight 
 				position={[10, 10, 5]} 
@@ -79,30 +78,24 @@ function LeaderboardVisualization() {
 			<pointLight position={[-5, 5, -5]} intensity={0.8} color="#00e5ff" />
 			<pointLight position={[5, 5, 5]} intensity={0.6} color="#39ff14" />
 			
-			{/* Podiums for top 3 teams */}
-			<LeaderboardPodium position={[0, 0, 0]} rank={1} color="#ffd700" teamName="Neon Ninjas" />
-			<LeaderboardPodium position={[-2, 0, 0]} rank={2} color="#c0c0c0" teamName="Quantum Quakes" />
-			<LeaderboardPodium position={[2, 0, 0]} rank={3} color="#cd7f32" teamName="Cyber Spartans" />
+			<LeaderboardPodium position={[0, -0.5, 0]} rank={1} color="#ffd700" teamName="Neon Ninjas" />
+			<LeaderboardPodium position={[-2, -0.75, 0]} rank={2} color="#c0c0c0" teamName="Quantum Quakes" />
+			<LeaderboardPodium position={[2, -1, 0]} rank={3} color="#cd7f32" teamName="Cyber Spartans" />
 			
-			{/* Sparkles */}
 			<Sparkles count={80} scale={8} size={1.5} speed={0.6} color="#39ff14" />
 			<Sparkles count={60} scale={6} size={1} speed={0.8} color="#bc13fe" />
 			
-			{/* Ground */}
-			<mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, 0]} receiveShadow>
+			<mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]} receiveShadow>
 				<planeGeometry args={[20, 20]} />
 				<meshStandardMaterial 
-					color="#111111" 
+					color="#050505" 
 					metalness={0.8} 
 					roughness={0.2}
-					emissive="#000011"
-					emissiveIntensity={0.05}
 				/>
 			</mesh>
 			
 			<OrbitControls 
 				enableDamping 
-				dampingFactor={0.05}
 				autoRotate
 				autoRotateSpeed={0.2}
 				maxPolarAngle={Math.PI / 2}
@@ -215,88 +208,84 @@ export default function Leaderboard3DPage() {
 	}, [])
 
 	return (
-		<div className="space-y-6">
-			<div className="text-center space-y-2">
-				<h2 className="text-3xl md:text-4xl font-display neon-text">Live Leaderboard</h2>
-				<p className="text-white/70">Real-time team rankings and statistics</p>
+		<div className="space-y-10 stagger-in">
+			<div className="text-center space-y-4">
+				<div className="inline-block px-4 py-1.5 rounded-full glass-premium text-neon-green text-[10px] font-display mb-2">
+					Neural Network Rankings
+				</div>
+				<h2 className="text-4xl lg:text-6xl font-display neon-text-purple tracking-tighter">Live Leaderboard</h2>
+				<p className="text-white/60 font-mono italic">Synchronizing combat data in real-time</p>
 			</div>
 			
-			{/* 3D Leaderboard Visualization */}
-			<div className="glass rounded-2xl p-6 mb-6">
-				<h3 className="text-xl font-semibold mb-4 text-center">3D Podium</h3>
-				<div className="h-[40dvh]">
+			<div className="glass-vibrant rounded-[2.5rem] p-8 mb-10 overflow-hidden relative group">
+				<div className="absolute inset-0 bg-gradient-to-tr from-yellow-500/5 via-transparent to-purple-500/5 z-0" />
+				<h3 className="text-lg font-display text-white/50 mb-6 text-center tracking-widest relative z-10">Elite Podium</h3>
+				<div className="h-[45dvh] relative z-10">
 					<LeaderboardVisualization />
 				</div>
 			</div>
 			
-			<div className="glass rounded-2xl p-6">
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-					<div className="glass rounded-xl p-4 text-center">
-						<div className="text-2xl font-bold text-green-400">{rows.length}</div>
-						<div className="text-white/70 text-sm">Total Teams</div>
-					</div>
-					<div className="glass rounded-xl p-4 text-center">
-						<div className="text-2xl font-bold text-blue-400">{rows[0]?.score || 0}</div>
-						<div className="text-white/70 text-sm">Highest Score</div>
-					</div>
-					<div className="glass rounded-xl p-4 text-center">
-						<div className="text-2xl font-bold text-purple-400">{Math.round(rows.reduce((acc, team) => acc + team.winRate, 0) / rows.length)}%</div>
-						<div className="text-white/70 text-sm">Avg Win Rate</div>
-					</div>
-					<div className="glass rounded-xl p-4 text-center">
-						<div className="text-2xl font-bold text-yellow-400">{rows.reduce((acc, team) => acc + team.matches, 0)}</div>
-						<div className="text-white/70 text-sm">Total Matches</div>
-					</div>
+			<div className="space-y-4">
+				<div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+					{[
+						{ label: 'Total Nodes', value: rows.length, color: 'text-neon-green' },
+						{ label: 'Peak Voltage', value: rows[0]?.score || 0, color: 'text-neon-blue' },
+						{ label: 'Avg Efficiency', value: `${Math.round(rows.reduce((acc, team) => acc + team.winRate, 0) / rows.length)}%`, color: 'text-neon-purple' },
+						{ label: 'Combat cycles', value: rows.reduce((acc, team) => acc + team.matches, 0), color: 'text-cyber-orange' },
+					].map((stat, i) => (
+						<div key={i} className="glass-premium p-6 rounded-2xl text-center card-hover">
+							<div className={`text-2xl font-black ${stat.color} mb-1`}>{stat.value}</div>
+							<div className="text-[10px] font-display text-white/30 tracking-widest">{stat.label}</div>
+						</div>
+					))}
 				</div>
 				
 				<div className="space-y-3">
-					{rows.map((team, idx) => (
-						<div key={team.team} className="glass rounded-xl p-4 hover:scale-105 transition-all duration-300">
-							<div className="flex items-center justify-between">
-								<div className="flex items-center space-x-4">
-									<div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-										team.rank === 1 ? 'bg-yellow-500 text-black' :
-										team.rank === 2 ? 'bg-gray-400 text-black' :
-										team.rank === 3 ? 'bg-orange-600 text-white' :
-										'bg-white/10 text-white'
+					{rows.map((team) => (
+						<div key={team.team} className="glass-premium rounded-2xl p-5 hover-lift card-hover transition-all duration-500 border-white/5 group relative overflow-hidden">
+							<div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+							
+							<div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+								<div className="flex items-center space-x-6">
+									<div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg transition-transform group-hover:scale-110 ${
+										team.rank === 1 ? 'bg-yellow-500 text-black shadow-[0_0_20px_rgba(234,179,8,0.4)]' :
+										team.rank === 2 ? 'bg-gray-400 text-black shadow-[0_0_20px_rgba(156,163,175,0.4)]' :
+										team.rank === 3 ? 'bg-orange-600 text-white shadow-[0_0_20px_rgba(234,88,12,0.4)]' :
+										'bg-white/5 text-white/40 border border-white/10'
 									}`}>
 										{team.rank}
 									</div>
-									<div>
-										<h3 className="text-lg font-semibold text-white">{team.team}</h3>
-										<div className="flex items-center space-x-2 text-sm text-white/70">
-											<span>{team.game}</span>
-											<span>•</span>
-											<span>{team.matches} matches</span>
+									<div className="space-y-1">
+										<h3 className="text-xl font-display text-white/90 group-hover:text-white transition-colors tracking-tight">{team.team}</h3>
+										<div className="flex items-center space-x-3 text-xs font-mono">
+											<span className="text-neon-blue uppercase">{team.game}</span>
+											<span className="text-white/20">|</span>
+											<span className="text-white/40">{team.matches} Match Cycles</span>
 										</div>
 									</div>
 								</div>
 								
-								<div className="flex items-center space-x-6">
-									<div className="text-center">
-										<div className="text-2xl font-bold text-green-400">{team.score}</div>
-										<div className="text-xs text-white/50">Score</div>
+								<div className="flex items-center justify-between lg:justify-end gap-8 bg-black/20 p-4 rounded-xl lg:bg-transparent lg:p-0">
+									<div className="text-center min-w-[60px]">
+										<div className="text-2xl font-black text-neon-green tracking-tighter">{team.score}</div>
+										<div className="text-[10px] text-white/30 uppercase font-display">Rating</div>
 									</div>
-									<div className="text-center">
-										<div className="text-lg font-bold text-blue-400">{team.winRate.toFixed(1)}%</div>
-										<div className="text-xs text-white/50">Win Rate</div>
+									<div className="text-center min-w-[60px]">
+										<div className="text-xl font-black text-neon-blue tracking-tighter">{team.winRate.toFixed(1)}%</div>
+										<div className="text-[10px] text-white/30 uppercase font-display">Win Ratio</div>
 									</div>
-									<div className="flex items-center space-x-1">
-										<span className={`text-sm ${team.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}>
-											{team.trend === 'up' ? '↗' : '↘'}
-										</span>
+									<div className={`p-2 rounded-lg ${team.trend === 'up' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+										{team.trend === 'up' ? '↑' : '↓'}
 									</div>
 								</div>
 							</div>
 							
-							<div className="mt-3 pt-3 border-t border-white/10">
-								<div className="flex flex-wrap gap-2">
-									{team.players.map((player, playerIdx) => (
-										<span key={playerIdx} className="px-2 py-1 bg-white/5 rounded text-xs text-white/70">
-											{player}
-										</span>
-									))}
-								</div>
+							<div className="mt-4 pt-4 border-t border-white/5 flex flex-wrap gap-2">
+								{team.players.map((player, playerIdx) => (
+									<span key={playerIdx} className="px-3 py-1 bg-white/5 rounded-full text-[10px] font-mono text-white/40 hover:text-white hover:bg-white/10 transition-all cursor-default">
+										{player}
+									</span>
+								))}
 							</div>
 						</div>
 					))}

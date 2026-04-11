@@ -2,6 +2,7 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Environment, Stars, Float, Sparkles, Cloud } from '@react-three/drei'
 import { useRef, useState, useMemo } from 'react'
 import * as THREE from 'three'
+import { useNotifications } from '../context/NotificationContext'
 
 function FloatingParticles() {
 	const particles = useRef()
@@ -50,7 +51,7 @@ function EnergyRings() {
 	const ring2 = useRef()
 	const ring3 = useRef()
 	
-	useFrame((state) => {
+	useFrame(() => {
 		if (ring1.current) ring1.current.rotation.z += 0.01
 		if (ring2.current) ring2.current.rotation.z -= 0.008
 		if (ring3.current) ring3.current.rotation.z += 0.012
@@ -114,6 +115,7 @@ function FloatingCubes() {
 function MainController() {
 	const ref = useRef()
 	const [hovered, setHovered] = useState(false)
+	const { addNotification } = useNotifications()
 	
 	useFrame((state, delta) => {
 		if (!ref.current) return
@@ -122,11 +124,19 @@ function MainController() {
 		ref.current.position.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.2
 		
 		if (hovered) {
-			ref.current.scale.setScalar(1.2)
+			ref.current.scale.lerp(new THREE.Vector3(1.2, 1.2, 1.2), 0.1)
 		} else {
 			ref.current.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1)
 		}
 	})
+
+	const handleClick = () => {
+		addNotification({
+			title: 'Energy Core Synced',
+			message: 'Neural interface established. Tournament latency: 12ms.',
+			type: 'success'
+		})
+	}
 	
 	return (
 		<group>
@@ -136,6 +146,7 @@ function MainController() {
 				receiveShadow
 				onPointerOver={() => setHovered(true)}
 				onPointerOut={() => setHovered(false)}
+				onClick={handleClick}
 			>
 				<torusGeometry args={[1.2, 0.4, 32, 64]} />
 				<meshStandardMaterial 
@@ -160,40 +171,11 @@ function MainController() {
 	)
 }
 
-function RotatingRings() {
-	const ring1 = useRef()
-	const ring2 = useRef()
-	const ring3 = useRef()
-	
-	useFrame((state, delta) => {
-		if (ring1.current) ring1.current.rotation.z += delta * 0.5
-		if (ring2.current) ring2.current.rotation.z -= delta * 0.3
-		if (ring3.current) ring3.current.rotation.z += delta * 0.7
-	})
-	
-	return (
-		<group>
-			<mesh ref={ring1} position={[0, 0, 0]}>
-				<torusGeometry args={[2, 0.1, 16, 32]} />
-				<meshBasicMaterial color="#39ff14" transparent opacity={0.6} />
-			</mesh>
-			<mesh ref={ring2} position={[0, 0, 0]}>
-				<torusGeometry args={[2.5, 0.08, 16, 32]} />
-				<meshBasicMaterial color="#bc13fe" transparent opacity={0.4} />
-			</mesh>
-			<mesh ref={ring3} position={[0, 0, 0]}>
-				<torusGeometry args={[3, 0.06, 16, 32]} />
-				<meshBasicMaterial color="#00e5ff" transparent opacity={0.3} />
-			</mesh>
-		</group>
-	)
-}
-
 export default function Home3D() {
 	return (
-		<div className="grid md:grid-cols-2 gap-8 items-center">
-			<div className="h-[42dvh] md:h-[52dvh] rounded-2xl overflow-hidden glass relative slide-in-left hover-lift">
-				<div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-blue-900/20 to-green-900/20 z-10 pointer-events-none"></div>
+		<div className="grid lg:grid-cols-2 gap-12 items-center stagger-in">
+			<div className="h-[50dvh] lg:h-[65dvh] rounded-3xl overflow-hidden glass-vibrant relative group hover-lift transition-all duration-700">
+				<div className="absolute inset-0 bg-gradient-to-br from-purple-900/10 via-transparent to-green-900/10 z-10 pointer-events-none group-hover:opacity-50 transition-opacity"></div>
 				<Canvas 
 					gl={{ 
 						antialias: true, 
@@ -208,76 +190,40 @@ export default function Home3D() {
 					<color attach="background" args={['#000000']} />
 					<Stars radius={150} depth={80} count={8000} factor={6} saturation={0} fade speed={1.5} />
 					
-					{/* Advanced Lighting Setup */}
 					<ambientLight intensity={0.3} color="#ffffff" />
 					<directionalLight 
 						position={[15, 15, 8]} 
 						intensity={2.5} 
 						color="#bc13fe" 
 						castShadow
-						shadow-mapSize={[4096, 4096]}
-						shadow-camera-far={100}
-						shadow-camera-left={-15}
-						shadow-camera-right={15}
-						shadow-camera-top={15}
-						shadow-camera-bottom={-15}
+						shadow-mapSize={[2048, 2048]}
 					/>
 					<pointLight position={[-12, 8, -8]} intensity={1.5} color="#00e5ff" />
 					<pointLight position={[12, 8, 8]} intensity={1.3} color="#39ff14" />
-					<pointLight position={[0, 15, 0]} intensity={1.0} color="#ff6b35" />
-					<pointLight position={[-8, 12, 4]} intensity={0.8} color="#ff1493" />
-					<pointLight position={[8, 12, -4]} intensity={0.8} color="#ffd700" />
 					
-					{/* 3D Scene Elements */}
 					<MainController />
 					<EnergyRings />
 					<FloatingParticles />
 					<FloatingCubes />
 					
-					{/* Enhanced Sparkles Effect */}
 					<Sparkles count={120} scale={12} size={2.5} speed={0.3} color="#39ff14" />
-					<Sparkles count={100} scale={10} size={2} speed={0.5} color="#bc13fe" />
 					<Sparkles count={80} scale={8} size={1.5} speed={0.7} color="#00e5ff" />
-					<Sparkles count={60} scale={6} size={1.2} speed={0.9} color="#ff6b35" />
-					<Sparkles count={40} scale={4} size={1} speed={1.1} color="#ff1493" />
 					
-					{/* Atmospheric Cloud */}
-					<Cloud
-						opacity={0.1}
-						speed={0.2}
-						width={20}
-						depth={20}
-						segments={20}
-						color="#39ff14"
-					/>
+					<Cloud opacity={0.05} speed={0.2} width={20} depth={20} color="#39ff14" />
 					
-					{/* Enhanced Ground Plane */}
 					<mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -3, 0]} receiveShadow>
 						<planeGeometry args={[40, 40]} />
-						<meshStandardMaterial 
-							color="#0a0a0a" 
-							metalness={0.9} 
-							roughness={0.1}
-							emissive="#001122"
-							emissiveIntensity={0.05}
-						/>
+						<meshStandardMaterial color="#050505" metalness={0.9} roughness={0.1} />
 					</mesh>
 					
-					{/* Holographic Grid */}
 					<mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.9, 0]}>
 						<planeGeometry args={[30, 30, 30, 30]} />
-						<meshBasicMaterial 
-							color="#39ff14" 
-							transparent 
-							opacity={0.1}
-							wireframe
-						/>
+						<meshBasicMaterial color="#39ff14" transparent opacity={0.05} wireframe />
 					</mesh>
 					
 					<OrbitControls 
 						enableDamping 
 						enablePan={false} 
-						dampingFactor={0.03}
 						autoRotate
 						autoRotateSpeed={0.3}
 						maxPolarAngle={Math.PI / 2}
@@ -287,34 +233,48 @@ export default function Home3D() {
 					
 					<Environment preset="night" />
 				</Canvas>
+				
+				<div className="absolute top-4 right-4 z-20 glass px-3 py-1 rounded-full text-[10px] uppercase tracking-tighter text-white/50">
+					Interactive Core Module
+				</div>
 			</div>
-			<div className="space-y-6 slide-in-right">
-				<div className="space-y-4">
-					<h1 className="text-4xl md:text-6xl font-display neon-text leading-tight bounce-in">
-						Welcome to 
-						<span className="block text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 shimmer">
-							Ranbhumi
-						</span>
+
+			<div className="space-y-10">
+				<div className="space-y-6">
+					<div className="inline-block px-4 py-1.5 rounded-full glass-premium border-neon-green/30 text-neon-green text-[10px] font-display mb-4 animate-pulse-slow">
+						The Future is Here
+					</div>
+					<h1 className="text-5xl lg:text-7xl font-display leading-[1.1] tracking-tighter">
+						The Ultimate <br />
+						<span className="gradient-text">Gaming Portal</span>
 					</h1>
-					<p className="text-white/80 max-w-prose text-lg leading-relaxed slide-in-up stagger-1">
-						Dive into a futuristic arena where tournaments, teams, and leaderboards come alive in stunning 3D. 
-						Experience the next generation of competitive gaming.
+					<p className="text-white/60 text-lg lg:text-xl font-mono leading-relaxed max-w-xl">
+						Experience high-stakes competitive combat in a futuristic arena. 
+						Real-time tracking, 3D visualization, and neural network connectivity.
 					</p>
 				</div>
 				
 				<div className="flex flex-wrap gap-4">
-					<div className="glass rounded-xl p-4 flex-1 min-w-[200px] hover-lift scale-in stagger-2">
-						<div className="text-2xl font-bold text-green-400 mb-2 glow-effect">50+</div>
-						<div className="text-white/70">Active Tournaments</div>
-					</div>
-					<div className="glass rounded-xl p-4 flex-1 min-w-[200px] hover-lift scale-in stagger-3">
-						<div className="text-2xl font-bold text-blue-400 mb-2 glow-effect">1.2K</div>
-						<div className="text-white/70">Players Online</div>
-					</div>
-					<div className="glass rounded-xl p-4 flex-1 min-w-[200px] hover-lift scale-in stagger-4">
-						<div className="text-2xl font-bold text-purple-400 mb-2 glow-effect">24/7</div>
-						<div className="text-white/70">Live Matches</div>
-					</div>
+					{[
+						{ label: 'Verified Tourney', value: '50+', color: 'text-neon-green' },
+						{ label: 'Active Combatants', value: '1.2K', color: 'text-neon-blue' },
+						{ label: 'Live Broadcasts', value: '24/7', color: 'text-neon-purple' },
+					].map((stat, i) => (
+						<div key={i} className="glass-premium p-6 rounded-2xl flex-1 min-w-[160px] card-hover">
+							<div className={`text-3xl font-black ${stat.color} mb-1`}>{stat.value}</div>
+							<div className="text-[10px] font-display text-white/40 uppercase">{stat.label}</div>
+						</div>
+					))}
+				</div>
+
+				<div className="flex gap-4">
+					<button className="btn-cyber flex items-center gap-2 group">
+						Enter Arena
+						<div className="group-hover:translate-x-1 transition-transform">→</div>
+					</button>
+					<button className="glass px-8 py-3 rounded-lg font-bold hover:bg-white/5 transition-all">
+						Read Protocol
+					</button>
 				</div>
 			</div>
 		</div>

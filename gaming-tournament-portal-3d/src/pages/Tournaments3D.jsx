@@ -1,7 +1,8 @@
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Text, Environment, Stars, Float, Sparkles, Cloud } from '@react-three/drei'
-import { useRef, useState, useMemo } from 'react'
+import { useRef, useState } from 'react'
 import * as THREE from 'three'
+import { useNotifications } from '../context/NotificationContext'
 
 function FloatingPlatform({ position, color }) {
 	const ref = useRef()
@@ -26,7 +27,6 @@ function FloatingPlatform({ position, color }) {
 						emissiveIntensity={0.2}
 					/>
 				</mesh>
-				{/* Glowing ring around platform */}
 				<mesh position={[0, 0.1, 0]}>
 					<torusGeometry args={[1.3, 0.05, 16, 64]} />
 					<meshBasicMaterial 
@@ -53,7 +53,6 @@ function TournamentArena() {
 	
 	return (
 		<group ref={arenaRef}>
-			{/* Central Arena Structure */}
 			<mesh position={[0, -1, 0]} castShadow receiveShadow>
 				<cylinderGeometry args={[8, 8, 0.5, 64]} />
 				<meshStandardMaterial 
@@ -65,7 +64,6 @@ function TournamentArena() {
 				/>
 			</mesh>
 			
-			{/* Arena Border */}
 			<mesh position={[0, -0.7, 0]}>
 				<torusGeometry args={[8.5, 0.1, 16, 100]} />
 				<meshBasicMaterial 
@@ -75,7 +73,6 @@ function TournamentArena() {
 				/>
 			</mesh>
 			
-			{/* Energy Beams */}
 			{Array.from({ length: 8 }).map((_, i) => (
 				<EnergyBeam key={i} index={i} elapsedTime={elapsedTimeRef.current} />
 			))}
@@ -100,9 +97,10 @@ function EnergyBeam({ index, elapsedTime }) {
 	)
 }
 
-function RotatingCard({ color = '#39ff14', title = 'Tournament', subtitle = 'Game Mode', ...props }) {
+function RotatingCard({ color = '#39ff14', title = 'Tournament', ...props }) {
 	const ref = useRef()
 	const [hovered, setHovered] = useState(false)
+	const { addNotification } = useNotifications()
 	
 	useFrame((_, delta) => {
 		if (ref.current) {
@@ -113,14 +111,22 @@ function RotatingCard({ color = '#39ff14', title = 'Tournament', subtitle = 'Gam
 			ref.current.position.y = Math.sin(Date.now() * 0.002 + props.position[0]) * 0.05
 		}
 	})
+
+	const handleClick = () => {
+		addNotification({
+			title: 'Tournament Details Query',
+			message: `Accessing data for ${title}. Prize: $25,000.`,
+			type: 'info'
+		})
+	}
 	
 	return (
 		<group {...props}>
-			{/* Main Card */}
 			<mesh
 				ref={ref}
 				onPointerOver={() => setHovered(true)}
 				onPointerOut={() => setHovered(false)}
+				onClick={handleClick}
 				castShadow
 				receiveShadow
 			>
@@ -134,7 +140,6 @@ function RotatingCard({ color = '#39ff14', title = 'Tournament', subtitle = 'Gam
 				/>
 			</mesh>
 			
-			{/* Glowing Ring */}
 			<mesh position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
 				<torusGeometry args={[1.2, 0.05, 16, 32]} />
 				<meshBasicMaterial 
@@ -145,7 +150,6 @@ function RotatingCard({ color = '#39ff14', title = 'Tournament', subtitle = 'Gam
 				/>
 			</mesh>
 			
-			{/* Hover Text */}
 			{hovered && (
 				<Text
 					position={[0, 2.2, 0]}
@@ -153,13 +157,11 @@ function RotatingCard({ color = '#39ff14', title = 'Tournament', subtitle = 'Gam
 					color={color}
 					anchorX="center"
 					anchorY="middle"
-					font="/fonts/inter-bold.woff"
 				>
 					{title}
 				</Text>
 			)}
 			
-			{/* Particle Effects */}
 			{hovered && Array.from({ length: 8 }).map((_, i) => (
 				<mesh key={i} position={[
 					Math.cos(i * Math.PI / 4) * 2,
@@ -245,14 +247,17 @@ export default function Tournaments3D() {
 	]
 	
 	return (
-		<div className="space-y-6">
-			<div className="text-center space-y-2 slide-in-up">
-				<h2 className="text-3xl md:text-4xl font-display neon-text bounce-in">Tournament Arena</h2>
-				<p className="text-white/70 slide-in-up stagger-1">Choose your battle and enter the 3D arena</p>
+		<div className="space-y-12 stagger-in">
+			<div className="text-center space-y-4">
+				<div className="inline-block px-4 py-1.5 rounded-full glass-premium text-neon-blue text-[10px] font-display mb-2">
+					Global Events Dashboard
+				</div>
+				<h2 className="text-4xl lg:text-6xl font-display neon-text-purple">Tournament Arena</h2>
+				<p className="text-white/60 font-mono">Select a virtual node to initialize synchronization</p>
 			</div>
 			
-			<div className="glass rounded-2xl p-6 relative overflow-hidden hover-lift slide-in-up stagger-2">
-				<div className="absolute inset-0 bg-gradient-to-br from-green-900/10 via-purple-900/10 to-blue-900/10 z-10 pointer-events-none"></div>
+			<div className="glass-vibrant rounded-[2.5rem] p-8 relative overflow-hidden group">
+				<div className="absolute inset-0 bg-gradient-to-br from-green-900/10 via-transparent to-blue-900/10 z-10 pointer-events-none"></div>
 				<div className="aspect-[21/9] w-full relative z-20">
 					<Canvas 
 						gl={{ 
@@ -268,41 +273,28 @@ export default function Tournaments3D() {
 						<color attach="background" args={['#000000']} />
 						<Stars radius={120} depth={60} count={5000} factor={5} saturation={0} fade speed={1.2} />
 						
-						{/* Advanced Lighting Setup */}
 						<ambientLight intensity={0.4} color="#ffffff" />
 						<directionalLight 
 							position={[15, 15, 8]} 
 							intensity={2.2} 
 							color="#bc13fe" 
 							castShadow
-							shadow-mapSize={[4096, 4096]}
-							shadow-camera-far={100}
-							shadow-camera-left={-20}
-							shadow-camera-right={20}
-							shadow-camera-top={20}
-							shadow-camera-bottom={-20}
+							shadow-mapSize={[2048, 2048]}
 						/>
 						<pointLight position={[-8, 8, -8]} intensity={1.5} color="#00e5ff" />
 						<pointLight position={[8, 8, 8]} intensity={1.3} color="#39ff14" />
-						<pointLight position={[0, 12, 0]} intensity={1.0} color="#ff6b35" />
-						<pointLight position={[-12, 6, 4]} intensity={0.8} color="#ff1493" />
-						<pointLight position={[12, 6, -4]} intensity={0.8} color="#ffd700" />
 						
-						{/* Tournament Arena */}
 						<TournamentArena />
 						
-						{/* Tournament Cards */}
 						{cards.map((c, i) => (
 							<RotatingCard 
 								key={i} 
 								color={c.color} 
 								title={c.title}
-								subtitle={c.subtitle}
 								position={[i * 3 - 7.5, 0, 0]} 
 							/>
 						))}
 						
-						{/* Floating Platforms */}
 						{cards.map((c, i) => (
 							<FloatingPlatform 
 								key={`platform-${i}`}
@@ -311,49 +303,23 @@ export default function Tournaments3D() {
 							/>
 						))}
 						
-						{/* Enhanced Sparkles Effect */}
 						<Sparkles count={150} scale={18} size={2.5} speed={0.4} color="#39ff14" />
-						<Sparkles count={120} scale={15} size={2} speed={0.6} color="#bc13fe" />
 						<Sparkles count={100} scale={12} size={1.5} speed={0.8} color="#00e5ff" />
-						<Sparkles count={80} scale={10} size={1.2} speed={1.0} color="#ff6b35" />
-						<Sparkles count={60} scale={8} size={1} speed={1.2} color="#ff1493" />
 						
-						{/* Atmospheric Cloud */}
-						<Cloud
-							opacity={0.08}
-							speed={0.3}
-							width={25}
-							depth={25}
-							segments={25}
-							color="#39ff14"
-						/>
+						<Cloud opacity={0.05} speed={0.3} width={25} depth={25} color="#39ff14" />
 						
-						{/* Enhanced Ground Plane */}
 						<mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.5, 0]} receiveShadow>
 							<planeGeometry args={[50, 50]} />
-							<meshStandardMaterial 
-								color="#0a0a0a" 
-								metalness={0.9} 
-								roughness={0.1}
-								emissive="#001122"
-								emissiveIntensity={0.03}
-							/>
+							<meshStandardMaterial color="#050505" metalness={0.9} roughness={0.1} />
 						</mesh>
 						
-						{/* Holographic Grid */}
 						<mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.4, 0]}>
 							<planeGeometry args={[40, 40, 40, 40]} />
-							<meshBasicMaterial 
-								color="#39ff14" 
-								transparent 
-								opacity={0.08}
-								wireframe
-							/>
+							<meshBasicMaterial color="#39ff14" transparent opacity={0.05} wireframe />
 						</mesh>
 						
 						<OrbitControls 
 							enableDamping 
-							dampingFactor={0.03}
 							autoRotate
 							autoRotateSpeed={0.2}
 							maxPolarAngle={Math.PI / 2}
@@ -366,21 +332,22 @@ export default function Tournaments3D() {
 				</div>
 			</div>
 			
-			{/* Tournament Info Cards */}
-			<div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+			<div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
 				{cards.map((card, i) => (
-					<div key={i} className={`glass rounded-xl p-6 hover:scale-105 transition-all duration-300 group hover-lift scale-in stagger-${i + 1}`}>
-						<div className="flex items-center justify-between mb-4">
-							<div className="flex items-center space-x-3">
+					<div key={i} className="glass-premium rounded-2xl p-6 border-white/5 hover-lift card-hover group relative overflow-hidden">
+						<div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-3xl -z-10 group-hover:bg-neon-green/10 transition-colors" />
+						
+						<div className="flex items-center justify-between mb-6">
+							<div className="flex items-center gap-3">
 								<div 
-									className="w-4 h-4 rounded-full pulse-glow" 
-									style={{ backgroundColor: card.color }}
+									className="w-3 h-3 rounded-full shadow-[0_0_10px_currentColor] animate-pulse" 
+									style={{ color: card.color, backgroundColor: card.color }}
 								></div>
-								<h3 className="text-xl font-semibold" style={{ color: card.color }}>
+								<h3 className="text-xl font-display text-white/90 group-hover:text-white transition-colors">
 									{card.title}
 								</h3>
 							</div>
-							<span className={`px-3 py-1 rounded-full text-xs font-medium ${
+							<span className={`px-3 py-1 rounded-lg text-[10px] uppercase font-bold tracking-widest ${
 								card.status === 'Live' ? 'bg-red-500/20 text-red-400' :
 								card.status === 'Upcoming' ? 'bg-yellow-500/20 text-yellow-400' :
 								'bg-blue-500/20 text-blue-400'
@@ -389,34 +356,35 @@ export default function Tournaments3D() {
 							</span>
 						</div>
 						
-						<div className="space-y-3">
-							<div className="flex items-center space-x-2">
-								<span className="text-white/60 text-sm">Game:</span>
+						<div className="space-y-4">
+							<div className="flex justify-between text-sm">
+								<span className="text-white/40 font-mono">Protocol:</span>
 								<span className="text-white font-medium">{card.game}</span>
 							</div>
 							
-							<div className="flex items-center space-x-2">
-								<span className="text-white/60 text-sm">Format:</span>
+							<div className="flex justify-between text-sm">
+								<span className="text-white/40 font-mono">Format:</span>
 								<span className="text-white font-medium">{card.subtitle}</span>
 							</div>
 							
-							<p className="text-white/70 text-sm">{card.description}</p>
+							<p className="text-white/60 text-xs leading-relaxed min-h-[40px]">
+								{card.description}
+							</p>
 							
-							<div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/10">
+							<div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
 								<div>
-									<div className="text-xs text-white/50">Prize Pool</div>
-									<div className="text-lg font-bold text-green-400">{card.prize}</div>
+									<div className="text-[10px] text-white/30 uppercase font-display mb-1">Prize Pool</div>
+									<div className="text-lg font-black text-neon-green">{card.prize}</div>
 								</div>
 								<div>
-									<div className="text-xs text-white/50">Players</div>
-									<div className="text-lg font-bold text-blue-400">{card.players}</div>
+									<div className="text-[10px] text-white/30 uppercase font-display mb-1">Slots</div>
+									<div className="text-lg font-black text-neon-blue">{card.players}</div>
 								</div>
 							</div>
 							
-							<div className="flex items-center justify-between pt-2">
-								<div className="text-xs text-white/50">Start Time</div>
-								<div className="text-sm font-medium text-white">{card.startTime}</div>
-							</div>
+							<button className="w-full mt-2 py-3 rounded-xl glass hover:bg-white/10 text-white font-display text-xs transition-all tracking-widest border-neon-blue/20 hover:border-neon-blue/40">
+								Join Protocol
+							</button>
 						</div>
 					</div>
 				))}
