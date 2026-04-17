@@ -53,7 +53,7 @@ src/
 └── index.css        # Global styles and animations
 ```
 
-## 3D Features
+## 3D Feature
 
 - **Interactive 3D Objects**: Hover effects and animations
 - **Dynamic Lighting**: Multiple colored lights and shadows
